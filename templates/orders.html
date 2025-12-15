@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Orders</h3>
+
+{% if single %}
+  <a class="btn btn-secondary mb-2" href="{{ url_for('index') }}">Continue shopping</a>
+{% endif %}
+
+{% for o in orders %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5>Order #{{ o.id }} <small class="text-muted">({{ o.created_at }})</small></h5>
+      <p><strong>Name:</strong> {{ o.customer_name }} — <strong>Phone:</strong> {{ o.customer_phone }}</p>
+      <p><strong>Address:</strong> {{ o.customer_address }}</p>
+      <p><strong>Pickup Point:</strong> {{ o.pickup_point }}</p>
+      <table class="table mb-0">
+        <thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead>
+        <tbody>
+          {% for it in o.items %}
+          <tr>
+            <td>{{ it.product.name }}</td>
+            <td>{{ it.quantity }}</td>
+            <td>₹{{ "%.2f"|format(it.price) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="mt-2"><strong>Total: ₹{{ "%.2f"|format(o.total) }}</strong></p>
+    </div>
+  </div>
+{% endfor %}
+
+{% if session.get('admin') %}
+  <a class="btn btn-outline-secondary" href="{{ url_for('admin_export_orders') }}">Export CSV</a>
+{% endif %}
+
+{% endblock %}

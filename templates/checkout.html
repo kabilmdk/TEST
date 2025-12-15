@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Checkout</h3>
+
+<div class="row">
+  <div class="col-md-6">
+    <form id="checkout-form">
+      <div class="mb-2">
+        <label>Name</label>
+        <input class="form-control" name="name" id="name" required>
+      </div>
+      <div class="mb-2">
+        <label>Phone</label>
+        <input class="form-control" name="phone" id="phone" required>
+      </div>
+      <div class="mb-2">
+        <label>Address</label>
+        <textarea class="form-control" name="address" id="address" rows="3" required></textarea>
+      </div>
+
+      <div class="mb-2">
+        <label>Pickup Point</label>
+        <select class="form-control" id="pickup_point" required>
+          <option value="" disabled selected>Select Pickup Location</option>
+          {% for p in pickup_points %}
+            <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" id="pay-btn" class="btn btn-success">Pay & Place Order</button>
+    </form>
+  </div>
+
+  <div class="col-md-6">
+    <h5>Order Summary</h5>
+    <ul class="list-group mb-2">
+      {% for it in items %}
+      <li class="list-group-item d-flex justify-content-between">
+        {{ it.product.name }} x{{ it.qty }}
+        <span>₹{{ "%.2f"|format(it.subtotal) }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <p><strong>Total: ₹{{ "%.2f"|format(total) }}</strong></p>
+  </div>
+</div>
+
+<!-- Razorpay checkout script (loaded from razorpay) -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+document.getElementById("checkout-form").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const address = document.getElementById("address").value;
+  const pickup_point = document.getElementById("pickup_point").value;
+
+  const res = await fetch("{{ url_for('create_razorpay_order') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, phone, address, pickup_point })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error || "Failed to create order: " + JSON.stringify(data));
+    return;
+  }
+
+  const options = {
+    "key": data.razorpay_key_id,
+    "amount": data.amount,
+    "currency": data.currency,
+    "name": "Crackers Store",
+    "description": "Order #" + data.order_id,
+    "order_id": data.razorpay_order_id,
+    "handler": async function (response){
+      const verifyRes = await fetch("{{ url_for('payment_verify') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature,
+          order_id: data.order_id
+        })
+      });
+      const verifyData = await verifyRes.json();
+      if (verifyRes.ok && verifyData.status === "success") {
+        window.location.href = "/order/" + verifyData.order_id + "/receipt";
+      } else {
+        alert("Payment verification failed: " + (verifyData.reason || verifyData.error || JSON.stringify(verifyData)));
+        window.location.href = "/order/" + data.order_id + "/receipt";
+      }
+    },
+    "prefill": {
+      "name": name,
+      "contact": phone
+    },
+    "theme": {
+      "color": "#3399cc"
+    }
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.open();
+});
+</script>
+{% endblock %}

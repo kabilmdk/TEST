@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between mb-2">
+  <h2>Products</h2>
+  {% if admin %}
+    <a class="btn btn-primary" href="{{ url_for('admin_product_form') }}">Add Product</a>
+  {% endif %}
+</div>
+
+<div class="row">
+  {% for p in products %}
+  <div class="col-md-4 mb-3">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">{{ p.name }}</h5>
+        <p class="card-text">{{ p.description[:120] }}{% if p.description|length>120 %}...{% endif %}</p>
+        <p class="mt-auto">
+          <strong>₹{{ "%.2f"|format(p.price) }}</strong>
+          <span class="text-muted"> | Stock: {{ p.stock }}</span>
+        </p>
+        <div class="mt-2">
+          <form action="{{ url_for('add_to_cart', pid=p.id) }}" method="post" class="d-flex gap-2">
+            <input name="qty" type="number" min="1" value="1" class="form-control form-control-sm" style="width:80px;">
+            <button class="btn btn-success btn-sm">Add</button>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('product_detail', pid=p.id) }}">Details</a>
+            {% if admin %}
+            <a class="btn btn-warning btn-sm" href="{{ url_for('admin_product_form', pid=p.id) }}">Edit</a>
+            <form action="{{ url_for('admin_product_delete', pid=p.id) }}" method="post" style="display:inline">
+              <button class="btn btn-danger btn-sm" onclick="return confirm('Delete product?')">Delete</button>
+            </form>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

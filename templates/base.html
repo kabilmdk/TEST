@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Crackers Store</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Crackers Store</a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Products</a></li>
+          </ul>
+          <ul class="navbar-nav">
+            {% if session.get('admin') %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_products') }}">Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_logout') }}">Logout</a></li>
+            {% else %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_login') }}">Admin Login</a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('cart') }}">Cart</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for m in messages %}
+            <div class="alert alert-info">{{ m }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/store.js') }}"></script>
+  </body>
+</html>
